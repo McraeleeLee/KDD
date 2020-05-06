@@ -2,7 +2,7 @@
 # pylint: disable = invalid-name, C0111
 from __future__ import division
 import json
-import lightgbm as lgb
+#import lightgbm as lgb
 import pandas as pd
 import numpy as np
 from sklearn.metrics import mean_squared_error, log_loss
@@ -37,6 +37,16 @@ LGB_PARAMETERS = {
 # number of leaves,will be used in feature transformation
 NUM_LEAVES = 63
 
+def pickle_read(file_path):
+    try:
+    	with open(file_path, 'rb') as f:
+        	return pickle.load(f)
+    except:
+        print('Pickle read error: not exists {}'.format(file_path))
+        return None
+
+pickle_read('dataset/construct_split1_click-0_train.pkl')
+exit(0)
 
 def gbdt_lr(stage, split):
 	filename = "dataset/construct_split{}_click-{}_%s.pkl".format(split, stage)

@@ -67,10 +67,12 @@ def construct_dataset(stage):
     all_user_feat = pickle_read("dataset/underexpose_user_feat.pkl")
 
     for split in range(1, 3):
+        item_count = dict()
         with open("dataset/clean_split{0}_click-{1}_valid.csv".format(split, stage), newline="") as fr_valid:
             reader_valid = csv.reader(fr_valid)
             validset = []
             count = 0
+            
             for line in reader_valid:
                 count += 1
                 userid, itemid, qtime = line
@@ -82,6 +84,8 @@ def construct_dataset(stage):
                     user_f = all_user_feat[userid]
                 if len(user_f) < 4:
                     user_f.insert(2, 0)
+
+                item_count[itemid] = item_count.get(itemid,0)+1
                 item_f = all_item_feat[itemid][0] + all_item_feat[itemid][1]
                 record_feat = [1., qtime] + user_f + item_f
                 assert len(record_feat) == 262
@@ -109,6 +113,8 @@ def construct_dataset(stage):
                     user_f = all_user_feat[userid]
                 if len(user_f) < 4:
                     user_f.insert(2, 0)
+
+                item_count[itemid] = item_count.setdefault(itemid,0)+1
                 item_f = all_item_feat[itemid][0] + all_item_feat[itemid][1]
                 record_feat = [1., qtime] + user_f + item_f
                 assert len(record_feat) == 262
@@ -118,10 +124,24 @@ def construct_dataset(stage):
 
             user_set = [i for i in all_user_feat.keys()]
             item_set = [i for i in all_item_feat.keys()]
+            #get most popular item for negetive subset  
+            item_count = sorted(item_count.items(),key=lambda x:x[1],reverse=True)
+            # print(item_count)
+            item_most_popular_id = [i[0] for i in item_count[:len(item_count)//3]]
+            
+            # print(item_most_popular_id)
+            # print(item_set)
+            # exit(0)
             invalid_data_count = 0
-            while invalid_data_count < count // 2:
+            while invalid_data_count < count//2 :
                 userid = random.choice(user_set)
-                itemid = random.choice(item_set)
+
+                if invalid_data_count % 2 == 0:
+                    itemid = random.choice(item_set)
+                else:   
+                    itemid = random.choice(item_most_popular_id)
+                
+                #itemid = random.choice(item_set)
                 k = "{}-{}".format(userid, itemid)
                 if k not in click_set:
                     click_set.add(k)
@@ -279,16 +299,16 @@ if __name__ == "__main__":
 
     released_stage = 4
 
-    # TODO: 1. transform csv to pkl (dict form)
-    make_feat_pkl()
+    # # TODO: 1. transform csv to pkl (dict form)
+    # make_feat_pkl()
 
-    # TODO: 2. data cleaning to original data file
-    for i in range(released_stage + 1):
-        data_clean(i)
+    # # TODO: 2. data cleaning to original data file
+    # for i in range(released_stage + 1):
+    #     data_clean(i)
 
-    # TODO: 3. data split on cleaned data
-    for i in range(released_stage + 1):
-        split_train_valid(i)
+    # # TODO: 3. data split on cleaned data
+    # for i in range(released_stage + 1):
+    #     split_train_valid(i)
         
     # TODO: 4. construct training set and validation set using data split results
     for i in range(released_stage + 1):
